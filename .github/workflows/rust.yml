@@ -1,4 +1,4 @@
-name: Rust
+name: UPM Testing
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --verbose
+      run: cargo install upm
     - name: Run tests
       run: upm install hello && upm install nano
       
