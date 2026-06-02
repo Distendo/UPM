@@ -1,5 +1,5 @@
 {
-  "name": "distendo-upm",
+  "name": "@distendo/upm",
   "version": "0.1.0",
   "description": "Universal Package Manager - Cross-platform package manager written in Rust",
   "author": "Distendo",
@@ -8,21 +8,18 @@
     "type": "git",
     "url": "git+https://github.com/Distendo/UPM.git"
   },
-  "bugs": {
-    "url": "https://github.com/Distendo/UPM/issues"
-  },
-  "homepage": "https://github.com/Distendo/UPM#readme",
   "bin": {
-    "upm": "./bin/upm.js"
+    "upm": "npm/bin/upm.js"
   },
   "scripts": {
-    "postinstall": "node install.js",
-    "preuninstall": "node uninstall.js"
+    "postinstall": "node npm/install.js",
+    "preuninstall": "node npm/uninstall.js",
+    "postinstall:ci": "node npm/install.js",
+    "build": "cargo build --release",
+    "test": "cargo test"
   },
   "files": [
-    "bin/",
-    "install.js",
-    "uninstall.js"
+    "npm/"
   ],
   "keywords": ["package-manager", "upm", "universal", "distendo"],
   "os": ["darwin", "linux", "win32"],

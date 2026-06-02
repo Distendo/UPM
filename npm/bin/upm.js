@@ -19,7 +19,7 @@ function findBinary() {
 
 const binary = findBinary();
 if (!binary) {
-  console.error('UPM is not installed. Run `cargo install upm` or download from https://github.com/Distendo/UPM');
+  console.error('UPM is not installed. Run `npm install` in the repository root or install via `cargo install upm`');
   process.exit(1);
 }
 
