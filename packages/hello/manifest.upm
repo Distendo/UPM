@@ -1,0 +1,22 @@
+{
+  "package": "hello",
+  "version": "1.0.0",
+  "description": "Hello World - UPM example package",
+  "license": "MIT",
+  "platforms": ["linux", "macos", "windows", "bsd"],
+  "source": {
+    "url": "https://github.com/Distendo/hello-upm",
+    "source_type": "github",
+    "branch": "main",
+    "tag": "v1.0.0"
+  },
+  "dependencies": [],
+  "build": [
+    "cc -o hello hello.c"
+  ],
+  "install": [
+    "install -d {{prefix}}/bin",
+    "cp hello {{prefix}}/bin/"
+  ],
+  "sha256": null
+}

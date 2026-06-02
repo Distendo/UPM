@@ -1,0 +1,9 @@
+/target/
+*.swp
+*.swo
+.DS_Store
+*.log
+config/config.json
+installed/
+cache/
+logs/

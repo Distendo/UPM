@@ -1,0 +1,22 @@
+{
+  "package": "nano",
+  "version": "7.2",
+  "description": "GNU nano - a small editor for the command line",
+  "license": "GPL-3.0",
+  "platforms": ["linux", "macos", "bsd"],
+  "source": {
+    "url": "https://github.com/madnight/nano",
+    "source_type": "github",
+    "branch": "master",
+    "tag": "v7.2"
+  },
+  "dependencies": [],
+  "build": [
+    "./configure --prefix={{prefix}}",
+    "make -j$(nproc)"
+  ],
+  "install": [
+    "make install"
+  ],
+  "sha256": null
+}

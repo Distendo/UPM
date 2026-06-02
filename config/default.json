@@ -1,0 +1,11 @@
+{
+  "upm_dir": "~/.upm",
+  "cache_dir": "~/.upm/cache",
+  "installed_dir": "~/.upm/installed",
+  "logs_dir": "~/.upm/logs",
+  "config_dir": "~/.upm/config",
+  "index_url": "https://raw.githubusercontent.com/Distendo/UPM/master/index/official.json",
+  "github_token": null,
+  "concurrency": 4,
+  "default_prefix": "/usr/local"
+}
