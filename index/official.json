@@ -2,27 +2,21 @@
   "name": "UPM Official Index",
   "description": "Official package index for Universal Package Manager",
   "packages": {
-    "nano": {
-      "name": "nano",
-      "version": "v7.2",
-      "description": "GNU nano - a small editor for the command line",
-      "source": "https://github.com/madnight/nano",
-      "repository": "https://github.com/madnight/nano",
-      "license": "GPL-3.0",
+    "fd": {
+      "name": "fd",
+      "version": "v9.0.0",
+      "description": "A simple, fast and user-friendly alternative to find",
+      "source": "https://github.com/sharkdp/fd",
+      "repository": "https://github.com/sharkdp/fd",
+      "license": "MIT",
       "dependencies": [],
       "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
-    },
-    "htop": {
-      "name": "htop",
-      "version": "v3.3.0",
-      "description": "Interactive process viewer",
-      "source": "https://github.com/htop-dev/htop",
-      "repository": "https://github.com/htop-dev/htop",
-      "license": "GPL-2.0",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": ["linux", "macos", "bsd"]
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
     },
     "ripgrep": {
       "name": "ripgrep",
@@ -33,51 +27,12 @@
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
-    },
-    "fd": {
-      "name": "fd",
-      "version": "v9.0.0",
-      "description": "A simple, fast and user-friendly alternative to find",
-      "source": "https://github.com/sharkdp/fd",
-      "repository": "https://github.com/sharkdp/fd",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
-    },
-    "bat": {
-      "name": "bat",
-      "version": "v0.24.0",
-      "description": "A cat(1) clone with wings",
-      "source": "https://github.com/sharkdp/bat",
-      "repository": "https://github.com/sharkdp/bat",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
-    },
-    "exa": {
-      "name": "exa",
-      "version": "v0.10.1",
-      "description": "A modern replacement for ls",
-      "source": "https://github.com/ogham/exa",
-      "repository": "https://github.com/ogham/exa",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": ["linux", "macos", "bsd"]
-    },
-    "tldr": {
-      "name": "tldr",
-      "version": "v3.1.0",
-      "description": "Simplified and community-driven man pages",
-      "source": "https://github.com/tldr-pages/tldr",
-      "repository": "https://github.com/tldr-pages/tldr",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
     },
     "jq": {
       "name": "jq",
@@ -88,18 +43,43 @@
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
     },
-    "hello": {
-      "name": "hello",
-      "version": "v1.0.0",
-      "description": "Hello world UPM demo package",
-      "source": "https://github.com/Distendo/hello-upm",
-      "repository": "https://github.com/Distendo/hello-upm",
+    "exa": {
+      "name": "exa",
+      "version": "v0.10.1",
+      "description": "A modern replacement for ls",
+      "source": "https://github.com/ogham/exa",
+      "repository": "https://github.com/ogham/exa",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd"
+      ]
+    },
+    "nano": {
+      "name": "nano",
+      "version": "v7.2",
+      "description": "GNU nano - a small editor for the command line",
+      "source": "https://github.com/madnight/nano",
+      "repository": "https://github.com/madnight/nano",
+      "license": "GPL-3.0",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
     },
     "curl": {
       "name": "curl",
@@ -110,7 +90,91 @@
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
-      "platforms": ["linux", "macos", "bsd", "windows"]
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
+    },
+    "bat": {
+      "name": "bat",
+      "version": "v0.24.0",
+      "description": "A cat(1) clone with wings",
+      "source": "https://github.com/sharkdp/bat",
+      "repository": "https://github.com/sharkdp/bat",
+      "license": "MIT",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
+    },
+    "test-pkg": {
+      "name": "test-pkg",
+      "version": "1.0.0",
+      "description": "A test package",
+      "source": "https://github.com/Distendo/test-pkg",
+      "repository": "https://github.com/Distendo/test-pkg",
+      "license": "MIT",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "windows",
+        "bsd"
+      ]
+    },
+    "hello": {
+      "name": "hello",
+      "version": "v1.0.0",
+      "description": "Hello world UPM demo package",
+      "source": "https://github.com/Distendo/hello-upm",
+      "repository": "https://github.com/Distendo/hello-upm",
+      "license": "MIT",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
+    },
+    "htop": {
+      "name": "htop",
+      "version": "v3.3.0",
+      "description": "Interactive process viewer",
+      "source": "https://github.com/htop-dev/htop",
+      "repository": "https://github.com/htop-dev/htop",
+      "license": "GPL-2.0",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd"
+      ]
+    },
+    "tldr": {
+      "name": "tldr",
+      "version": "v3.1.0",
+      "description": "Simplified and community-driven man pages",
+      "source": "https://github.com/tldr-pages/tldr",
+      "repository": "https://github.com/tldr-pages/tldr",
+      "license": "MIT",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
     }
   }
 }

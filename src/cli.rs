@@ -49,6 +49,20 @@ pub enum Commands {
     #[command(about = "Run system diagnostics")]
     Doctor,
 
+    #[command(about = "Register a new package in the official index")]
+    Add {
+        #[arg(help = "Package name")]
+        name: String,
+        #[arg(help = "GitHub repository URL")]
+        repo: String,
+        #[arg(short = 'V', long = "version", default_value = "1.0.0")]
+        version: String,
+        #[arg(short = 'd', long = "description", default_value = "")]
+        description: String,
+        #[arg(short = 'l', long = "license", default_value = "MIT")]
+        license: String,
+    },
+
     #[command(about = "Initialize UPM and add bin directory to PATH")]
     Init,
 

@@ -9,6 +9,7 @@ mod downloader;
 mod errors;
 mod logger;
 mod package;
+mod registry;
 mod rollback;
 mod setup;
 mod verify;
@@ -28,6 +29,7 @@ use errors::Result;
 use logger::Logger;
 use package::index::PackageIndex;
 use package::installer::Installer;
+use registry::Registry;
 use rollback::RollbackManager;
 use setup::Setup;
 
@@ -363,6 +365,11 @@ async fn main() {
         Some(Commands::List) => {
             let packages = db.list_packages();
             print_package_list(&packages, &logger);
+        }
+        Some(Commands::Add { name, repo, version, description, license }) => {
+            if let Err(e) = Registry::add(name, repo, version, description, license, &config, &logger, cli.assume_yes) {
+                logger.error(&format!("Failed to register package: {e}"));
+            }
         }
         Some(Commands::Init) => {
             if let Err(e) = Setup::init(&config, &logger, cli.assume_yes) {
