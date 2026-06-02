@@ -310,6 +310,7 @@ impl Installer {
 
         let symlink_dir = install_dir.parent().unwrap_or(install_dir).join("bin");
         std::fs::create_dir_all(&symlink_dir).ok();
+        #[cfg(unix)]
         if symlink_dir.exists() && bin_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&bin_dir) {
                 for entry in entries.flatten() {
