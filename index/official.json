@@ -113,23 +113,7 @@
         "windows"
       ]
     },
-    "test-pkg": {
-      "name": "test-pkg",
-      "version": "1.0.0",
-      "description": "A test package",
-      "source": "https://github.com/Distendo/test-pkg",
-      "repository": "https://github.com/Distendo/test-pkg",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": [
-        "linux",
-        "macos",
-        "windows",
-        "bsd"
-      ]
-    },
-    "hello": {
+"hello": {
       "name": "hello",
       "version": "v1.0.0",
       "description": "Hello world UPM demo package",
