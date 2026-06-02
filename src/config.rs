@@ -27,7 +27,7 @@ impl Default for Config {
             installed_dir: upm_dir.join("installed"),
             logs_dir: upm_dir.join("logs"),
             config_dir: upm_dir.join("config"),
-            index_url: "https://raw.githubusercontent.com/Distendo/UPM/master/index/official.json".to_string(),
+            index_url: "https://raw.githubusercontent.com/Distendo/UPM/main/index/official.json".to_string(),
             github_token: None,
             concurrency: 4,
             default_prefix: PathBuf::from("/usr/local"),

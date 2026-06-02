@@ -4,7 +4,7 @@
   "packages": {
     "hello-upm": {
       "name": "hello-upm",
-      "version": "1.0.0",
+      "version": "v1.0.0",
       "description": "A simple hello world C program",
       "source": "https://github.com/Distendo/hello-upm",
       "repository": "https://github.com/Distendo/hello-upm",
