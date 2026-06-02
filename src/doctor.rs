@@ -3,6 +3,7 @@ use colored::*;
 use crate::config::Config;
 use crate::errors::Result;
 use crate::logger::Logger;
+use crate::setup::Setup;
 
 pub struct Doctor;
 
@@ -17,6 +18,7 @@ impl Doctor {
             Self::check_permissions(config),
             Self::check_filesystem(config),
             Self::check_network(),
+            Self::check_path(config),
         ];
 
         let total = checks.len();
@@ -108,6 +110,16 @@ impl Doctor {
 
     fn check_network() -> (String, bool) {
         ("Network: deferred to runtime".to_string(), true)
+    }
+
+    fn check_path(config: &Config) -> (String, bool) {
+        let in_path = Setup::check_path_bool(config);
+        let msg = if in_path {
+            "PATH: UPM bin directory found".to_string()
+        } else {
+            "PATH: UPM bin directory NOT found (run `upm init`)".to_string()
+        };
+        (msg, in_path)
     }
 }
 

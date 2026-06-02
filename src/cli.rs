@@ -49,6 +49,9 @@ pub enum Commands {
     #[command(about = "Run system diagnostics")]
     Doctor,
 
+    #[command(about = "Initialize UPM and add bin directory to PATH")]
+    Init,
+
     #[command(about = "Clean cache")]
     Clean,
 

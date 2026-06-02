@@ -10,6 +10,7 @@ mod errors;
 mod logger;
 mod package;
 mod rollback;
+mod setup;
 mod verify;
 
 use std::sync::Arc;
@@ -28,6 +29,7 @@ use logger::Logger;
 use package::index::PackageIndex;
 use package::installer::Installer;
 use rollback::RollbackManager;
+use setup::Setup;
 
 fn print_welcome(logger: &Logger) {
     let version = env!("CARGO_PKG_VERSION");
@@ -361,6 +363,11 @@ async fn main() {
         Some(Commands::List) => {
             let packages = db.list_packages();
             print_package_list(&packages, &logger);
+        }
+        Some(Commands::Init) => {
+            if let Err(e) = Setup::init(&config, &logger, cli.assume_yes) {
+                logger.error(&format!("Setup failed: {e}"));
+            }
         }
         Some(Commands::Doctor) => {
             if let Err(e) = Doctor::run(&config, &logger) {
