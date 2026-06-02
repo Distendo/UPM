@@ -88,11 +88,11 @@ impl Installer {
             logger.success("Checksum verification passed");
         }
 
-        let has_manifest_commands = manifest.build.is_some() || manifest.install.is_some();
         let groq = Groq::from_env();
-        let should_use_ai = use_ai || (groq.is_some() && !has_manifest_commands);
+        let has_manifest_commands = manifest.build.is_some() || manifest.install.is_some();
+        let use_ai = use_ai || (groq.is_some() && !has_manifest_commands);
 
-        if should_use_ai {
+        if use_ai {
             if let Some(ref groq_client) = groq {
                 logger.step("AI: Analyzing repository structure...");
                 let file_list = Groq::list_directory_tree(&work_dir, 3)?;
@@ -123,10 +123,12 @@ impl Installer {
 
                 if !plan.install.is_empty() {
                     logger.step("AI: Running install commands...");
+                    std::fs::create_dir_all(&install_dir)?;
+                    std::fs::create_dir_all(&install_dir.join("bin"))?;
                     let expanded: Vec<String> = plan
                         .install
                         .iter()
-                        .map(|cmd| cmd.replace("{{prefix}}", &install_dir.to_string_lossy()))
+                        .map(|cmd| cmd.replace("{prefix}", &install_dir.to_string_lossy()))
                         .collect();
                     Self::run_commands(&expanded, &work_dir, config, logger)?;
                 } else {
@@ -134,10 +136,11 @@ impl Installer {
                     Self::copy_to_install_dir(&work_dir, &install_dir, logger)?;
                 }
             } else {
-                logger.step("No build/install steps in manifest — copying files directly...");
-                Self::copy_to_install_dir(&work_dir, &install_dir, logger)?;
+                logger.warning("--ai flag used but no GROQ_API_KEY set. Falling back to manifest commands.");
             }
-        } else {
+        }
+
+        if !use_ai || groq.is_none() {
             if let Some(ref build_cmds) = manifest.build {
                 logger.step("Running build commands...");
                 Self::run_commands(build_cmds, &work_dir, config, logger)?;
@@ -145,12 +148,18 @@ impl Installer {
 
             if let Some(ref install_cmds) = manifest.install {
                 logger.step("Running install commands...");
+                std::fs::create_dir_all(&install_dir)?;
+                std::fs::create_dir_all(&install_dir.join("bin"))?;
                 let expanded: Vec<String> = install_cmds
                     .iter()
-                    .map(|cmd| cmd.replace("{{prefix}}", &install_dir.to_string_lossy()))
+                    .map(|cmd| cmd.replace("{prefix}", &install_dir.to_string_lossy()))
                     .collect();
                 Self::run_commands(&expanded, &work_dir, config, logger)?;
-            } else {
+            }
+        }
+
+        if !use_ai || groq.is_none() {
+            if manifest.install.is_none() {
                 logger.step("Installing package files...");
                 Self::copy_to_install_dir(&work_dir, &install_dir, logger)?;
             }

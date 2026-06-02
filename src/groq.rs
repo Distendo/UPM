@@ -50,7 +50,8 @@ impl Groq {
     pub fn from_env() -> Option<Self> {
         let api_key = std::env::var("UPM_GROQ_API_KEY")
             .or_else(|_| std::env::var("GROQ_API_KEY"))
-            .ok()?;
+            .ok()
+            .or_else(crate::groq_key::decrypt_groq_key)?;
 
         Some(Self {
             config: GroqConfig {

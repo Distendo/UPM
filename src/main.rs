@@ -8,6 +8,7 @@ mod doctor;
 mod downloader;
 mod errors;
 mod groq;
+mod groq_key;
 mod logger;
 mod package;
 mod registry;
