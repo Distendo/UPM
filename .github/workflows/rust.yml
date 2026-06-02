@@ -19,6 +19,6 @@ jobs:
     - name: Build
       run: cargo install upm
     - name: Run tests
-      run: upm install hello && upm install nano
+      run: upm install hello && upm install bat
       
       
