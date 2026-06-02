@@ -7,6 +7,7 @@ mod database;
 mod doctor;
 mod downloader;
 mod errors;
+mod groq;
 mod logger;
 mod package;
 mod registry;
@@ -283,7 +284,7 @@ async fn main() {
     };
 
     match &cli.command {
-        Some(Commands::Install { package }) => {
+        Some(Commands::Install { package, use_ai }) => {
             logger.header(&format!("Install: {}", package));
             match Installer::install_package(
                 package,
@@ -293,6 +294,7 @@ async fn main() {
                 &github,
                 &index,
                 &mut rollback,
+                *use_ai,
             )
             .await
             {
@@ -324,6 +326,7 @@ async fn main() {
                         &github,
                         &index,
                         &mut rollback,
+                        false,
                     )
                     .await
                     {
@@ -348,6 +351,7 @@ async fn main() {
                             &github,
                             &index,
                             &mut rollback,
+                            false,
                         )
                         .await
                         {

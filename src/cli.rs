@@ -23,6 +23,9 @@ pub enum Commands {
     Install {
         #[arg(help = "Package name to install")]
         package: String,
+
+        #[arg(long = "ai", help = "Use AI to generate build/install plan (requires GROQ_API_KEY)")]
+        use_ai: bool,
     },
 
     #[command(about = "Remove an installed package")]

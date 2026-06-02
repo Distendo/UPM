@@ -2,44 +2,28 @@
   "name": "UPM Official Index",
   "description": "Official package index for Universal Package Manager",
   "packages": {
-    "fd": {
-      "name": "fd",
-      "version": "v9.0.0",
-      "description": "A simple, fast and user-friendly alternative to find",
-      "source": "https://github.com/sharkdp/fd",
-      "repository": "https://github.com/sharkdp/fd",
+    "hello-upm": {
+      "name": "hello-upm",
+      "version": "1.0.0",
+      "description": "A simple hello world C program",
+      "source": "https://github.com/Distendo/hello-upm",
+      "repository": "https://github.com/Distendo/hello-upm",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
       "platforms": [
         "linux",
         "macos",
-        "bsd",
-        "windows"
+        "windows",
+        "bsd"
       ]
     },
-    "ripgrep": {
-      "name": "ripgrep",
-      "version": "14.1.0",
-      "description": "ripgrep recursively searches directories for a regex pattern",
-      "source": "https://github.com/BurntSushi/ripgrep",
-      "repository": "https://github.com/BurntSushi/ripgrep",
-      "license": "MIT",
-      "dependencies": [],
-      "sha256": null,
-      "platforms": [
-        "linux",
-        "macos",
-        "bsd",
-        "windows"
-      ]
-    },
-    "jq": {
-      "name": "jq",
-      "version": "jq-1.7.1",
-      "description": "Command-line JSON processor",
-      "source": "https://github.com/jqlang/jq",
-      "repository": "https://github.com/jqlang/jq",
+    "tldr": {
+      "name": "tldr",
+      "version": "v3.1.0",
+      "description": "Simplified and community-driven man pages",
+      "source": "https://github.com/tldr-pages/tldr",
+      "repository": "https://github.com/tldr-pages/tldr",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
@@ -65,28 +49,27 @@
         "bsd"
       ]
     },
-    "nano": {
-      "name": "nano",
-      "version": "v7.2",
-      "description": "GNU nano - a small editor for the command line",
-      "source": "https://github.com/madnight/nano",
-      "repository": "https://github.com/madnight/nano",
-      "license": "GPL-3.0",
+    "htop": {
+      "name": "htop",
+      "version": "v3.3.0",
+      "description": "Interactive process viewer",
+      "source": "https://github.com/htop-dev/htop",
+      "repository": "https://github.com/htop-dev/htop",
+      "license": "GPL-2.0",
       "dependencies": [],
       "sha256": null,
       "platforms": [
         "linux",
         "macos",
-        "bsd",
-        "windows"
+        "bsd"
       ]
     },
-    "curl": {
-      "name": "curl",
-      "version": "curl-8_6_0",
-      "description": "Command line tool and library for transferring data with URLs",
-      "source": "https://github.com/curl/curl",
-      "repository": "https://github.com/curl/curl",
+    "jq": {
+      "name": "jq",
+      "version": "jq-1.7.1",
+      "description": "Command-line JSON processor",
+      "source": "https://github.com/jqlang/jq",
+      "repository": "https://github.com/jqlang/jq",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
@@ -113,12 +96,12 @@
         "windows"
       ]
     },
-"hello": {
-      "name": "hello",
-      "version": "v1.0.0",
-      "description": "Hello world UPM demo package",
-      "source": "https://github.com/Distendo/hello-upm",
-      "repository": "https://github.com/Distendo/hello-upm",
+    "curl": {
+      "name": "curl",
+      "version": "curl-8_6_0",
+      "description": "Command line tool and library for transferring data with URLs",
+      "source": "https://github.com/curl/curl",
+      "repository": "https://github.com/curl/curl",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
@@ -129,27 +112,60 @@
         "windows"
       ]
     },
-    "htop": {
-      "name": "htop",
-      "version": "v3.3.0",
-      "description": "Interactive process viewer",
-      "source": "https://github.com/htop-dev/htop",
-      "repository": "https://github.com/htop-dev/htop",
-      "license": "GPL-2.0",
+    "ripgrep": {
+      "name": "ripgrep",
+      "version": "14.1.0",
+      "description": "ripgrep recursively searches directories for a regex pattern",
+      "source": "https://github.com/BurntSushi/ripgrep",
+      "repository": "https://github.com/BurntSushi/ripgrep",
+      "license": "MIT",
       "dependencies": [],
       "sha256": null,
       "platforms": [
         "linux",
         "macos",
-        "bsd"
+        "bsd",
+        "windows"
       ]
     },
-    "tldr": {
-      "name": "tldr",
-      "version": "v3.1.0",
-      "description": "Simplified and community-driven man pages",
-      "source": "https://github.com/tldr-pages/tldr",
-      "repository": "https://github.com/tldr-pages/tldr",
+    "fd": {
+      "name": "fd",
+      "version": "v9.0.0",
+      "description": "A simple, fast and user-friendly alternative to find",
+      "source": "https://github.com/sharkdp/fd",
+      "repository": "https://github.com/sharkdp/fd",
+      "license": "MIT",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
+    },
+    "nano": {
+      "name": "nano",
+      "version": "v7.2",
+      "description": "GNU nano - a small editor for the command line",
+      "source": "https://github.com/madnight/nano",
+      "repository": "https://github.com/madnight/nano",
+      "license": "GPL-3.0",
+      "dependencies": [],
+      "sha256": null,
+      "platforms": [
+        "linux",
+        "macos",
+        "bsd",
+        "windows"
+      ]
+    },
+    "hello": {
+      "name": "hello",
+      "version": "v1.0.0",
+      "description": "Hello world UPM demo package",
+      "source": "https://github.com/Distendo/hello-upm",
+      "repository": "https://github.com/Distendo/hello-upm",
       "license": "MIT",
       "dependencies": [],
       "sha256": null,
