@@ -67,9 +67,11 @@ impl PackageDatabase {
     }
 
     pub fn remove_package(&mut self, name: &str) -> Result<InstalledPackage> {
-        self.packages
+        let pkg = self.packages
             .remove(name)
-            .ok_or_else(|| UpmError::PackageNotInstalled(name.to_string()))
+            .ok_or_else(|| UpmError::PackageNotInstalled(name.to_string()))?;
+        self.save()?;
+        Ok(pkg)
     }
 
     pub fn get_package(&self, name: &str) -> Option<&InstalledPackage> {

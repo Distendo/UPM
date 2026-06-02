@@ -30,7 +30,13 @@ impl DependencyResolver {
             .find_package(package_name)
             .ok_or_else(|| UpmError::PackageNotFound(package_name.to_string()))?;
 
-        queue.push_back((index_pkg.name.clone(), 0usize));
+        visited.insert(index_pkg.name.clone());
+
+        for dep in &index_pkg.dependencies {
+            if !visited.contains(dep) {
+                queue.push_back((dep.clone(), 0usize));
+            }
+        }
 
         while let Some((name, depth)) = queue.pop_front() {
             if !visited.insert(name.clone()) {
