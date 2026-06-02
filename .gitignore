@@ -7,3 +7,7 @@ config/config.json
 installed/
 cache/
 logs/
+
+# npm package
+npm/.build/
+npm/node_modules/
