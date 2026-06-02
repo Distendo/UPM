@@ -11,3 +11,4 @@ logs/
 # npm package
 npm/.build/
 npm/node_modules/
+npm/bin/upm
