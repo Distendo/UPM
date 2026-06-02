@@ -269,9 +269,12 @@ impl Installer {
             };
 
             if !status.success() {
+                let exit_info = match status.code() {
+                    Some(code) => format!("exited with code {code}"),
+                    None => "terminated by signal".into(),
+                };
                 return Err(UpmError::General(format!(
-                    "Command exited with {}: {}",
-                    status.code().unwrap_or(-1),
+                    "Command {exit_info}: {}",
                     trimmed
                 )));
             }

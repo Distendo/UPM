@@ -1,6 +1,6 @@
 [package]
 name = "upm"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "Universal Package Manager - Cross-platform package manager"
 authors = ["Distendo"]
@@ -34,3 +34,4 @@ flate2 = "1"
 tar = "0.4"
 url = "2"
 hex = "0.4"
+semver = "1"

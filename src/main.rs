@@ -183,11 +183,21 @@ fn handle_clean(config: &Config, logger: &Logger) {
     logger.header("Cleaning Cache");
     let cache_dir = &config.cache_dir;
     if cache_dir.exists() {
-        let count = std::fs::read_dir(cache_dir)
-            .map(|e| e.count())
-            .unwrap_or(0);
-        std::fs::remove_dir_all(cache_dir).ok();
-        std::fs::create_dir_all(cache_dir).ok();
+        let count = match std::fs::read_dir(cache_dir) {
+            Ok(entries) => entries.count(),
+            Err(e) => {
+                logger.error(&format!("Cannot read cache directory: {e}"));
+                return;
+            }
+        };
+        if let Err(e) = std::fs::remove_dir_all(cache_dir) {
+            logger.error(&format!("Cannot remove cache directory: {e}"));
+            return;
+        }
+        if let Err(e) = std::fs::create_dir_all(cache_dir) {
+            logger.error(&format!("Cannot recreate cache directory: {e}"));
+            return;
+        }
         logger.success(&format!("Cleaned {} cache entries", count));
     } else {
         logger.info("Cache is already empty.");
@@ -392,6 +402,11 @@ fn platform_binary_name() -> String {
     }
 }
 
+fn parse_version(v: &str) -> Option<semver::Version> {
+    let v = v.trim_start_matches('v');
+    semver::Version::parse(v).ok()
+}
+
 async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::github::GithubApi) {
     logger.header("UPM Self-Update");
 
@@ -421,17 +436,31 @@ async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::githu
         }
     };
 
-    let latest_version = release["tag_name"]
-        .as_str()
-        .unwrap_or("unknown")
-        .trim_start_matches('v');
+    let latest_tag = release["tag_name"]
+        .as_str();
 
     let current_version = env!("CARGO_PKG_VERSION");
-    if latest_version <= current_version {
-        logger.success(&format!("Already up to date (v{})", current_version));
-        return;
+    let current_ver = parse_version(current_version);
+    let latest_tag_str = latest_tag.unwrap_or("");
+    let latest_ver = parse_version(latest_tag_str);
+
+    match (latest_ver, current_ver) {
+        (Some(latest), Some(current)) if latest <= current => {
+            logger.success(&format!("Already up to date (v{})", current_version));
+            return;
+        }
+        (Some(_), Some(_)) => {} // proceed with update
+        (Some(_), None) => {
+            logger.error(&format!("Cannot parse current version: v{}", current_version));
+            return;
+        }
+        (None, _) => {
+            logger.error(&format!("Cannot parse latest version from tag: '{}'", latest_tag_str));
+            return;
+        }
     }
 
+    let latest_version = latest_tag_str.trim_start_matches('v');
     logger.info(&format!("Found new version: v{} (current: v{})", latest_version, current_version));
 
     let binary_name = platform_binary_name();
@@ -442,7 +471,10 @@ async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::githu
 
     logger.step(&format!("Downloading {}...", binary_name));
     let tmp_dir = config.cache_dir.join(".upm_update_tmp");
-    std::fs::create_dir_all(&tmp_dir).ok();
+    if let Err(e) = std::fs::create_dir_all(&tmp_dir) {
+        logger.error(&format!("Cannot create temp directory: {e}"));
+        return;
+    }
     let tmp_path = tmp_dir.join(&binary_name);
 
     if let Err(e) = github.client().download_file(&download_url, &tmp_path).await {
@@ -463,7 +495,12 @@ async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::githu
     }
 
     let backup_path = current_exe.with_extension("upm.bak");
-    std::fs::rename(&current_exe, &backup_path).ok();
+    if let Err(e) = std::fs::rename(&current_exe, &backup_path) {
+        logger.error(&format!("Cannot back up current binary: {e}"));
+        logger.info("Update aborted.");
+        std::fs::remove_dir_all(&tmp_dir).ok();
+        return;
+    }
 
     match std::fs::rename(&tmp_path, &current_exe) {
         Ok(()) => {
@@ -475,7 +512,14 @@ async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::githu
         Err(e) => {
             logger.error(&format!("Failed to replace binary: {e}"));
             logger.info("Restoring backup...");
-            std::fs::rename(&backup_path, &current_exe).ok();
+            if let Err(re) = std::fs::rename(&backup_path, &current_exe) {
+                logger.error(&format!("CRITICAL: Failed to restore backup: {re}"));
+                logger.info(&format!("Manual recovery needed. Backup at: {}", backup_path.display()));
+                logger.info(&format!("New binary at: {}", tmp_path.display()));
+            } else {
+                logger.success("Backup restored successfully.");
+            }
+            std::fs::remove_dir_all(&tmp_dir).ok();
         }
     }
 }
