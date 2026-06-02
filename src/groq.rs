@@ -162,7 +162,7 @@ Rules:
 
         let clean: String = content
             .chars()
-            .filter(|c| c.is_ascii_graphic() || c.is_ascii_whitespace())
+            .filter(|c| !c.is_control() || c.is_ascii_whitespace())
             .collect();
 
         let plan: BuildPlan = serde_json::from_str(&clean)
@@ -209,7 +209,8 @@ Rules:
                 .to_string_lossy()
                 .to_string();
 
-            if relative.starts_with('.') || relative == "target" || relative == "node_modules"
+            if relative == ".git" || relative.starts_with(".git/")
+                || relative == "target" || relative == "node_modules"
                 || relative.starts_with("target/") || relative.starts_with("node_modules/")
             {
                 continue;

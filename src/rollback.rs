@@ -65,7 +65,7 @@ impl RollbackManager {
             .collect();
 
         let point = RollbackPoint {
-            id: format!("rp_{}", Local::now().format("%Y%m%d_%H%M%S")),
+            id: format!("rp_{}_{:04}", Local::now().format("%Y%m%d_%H%M%S"), self.rollbacks.len()),
             timestamp: Local::now().to_rfc3339(),
             packages_before: before,
             packages_after: HashMap::new(),

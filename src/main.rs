@@ -22,7 +22,7 @@ use clap::Parser;
 use colored::*;
 
 use api::github::GithubApi;
-use cli::{Cli, Commands};
+use cli::{Cli, Commands, RollbackAction};
 use config::Config;
 use database::PackageDatabase;
 use doctor::Doctor;
@@ -70,11 +70,12 @@ fn print_package_list(packages: &[&database::InstalledPackage], logger: &Logger)
     println!("{}", "─".repeat(80).dimmed());
 
     for pkg in packages {
+        let installed_at = pkg.installed_at.get(..10).unwrap_or("???");
         println!(
             "  {:<23} {:<15} {:<20} {}",
             pkg.name.bright_white(),
             pkg.version.green(),
-            &pkg.installed_at[..10].yellow(),
+            installed_at.yellow(),
             pkg.source.blue().dimmed()
         );
     }
@@ -200,7 +201,7 @@ fn handle_info(package: &str, db: &PackageDatabase, index: &PackageIndex, logger
         println!("  {} {}", "Description:".dimmed(), installed.manifest.description.as_deref().unwrap_or("N/A"));
         println!("  {} {}", "License:".dimmed(), installed.manifest.license.as_deref().unwrap_or("N/A"));
         println!("  {} {}", "Source:".dimmed(), installed.source.dimmed());
-        println!("  {} {}", "Installed:".dimmed(), &installed.installed_at[..19].yellow());
+        println!("  {} {}", "Installed:".dimmed(), installed.installed_at.get(..19).unwrap_or("?").yellow());
         println!("  {} {}", "Path:".dimmed(), installed.install_path.to_string_lossy().dimmed());
         println!("  {} {}", "Files:".dimmed(), installed.files.len().to_string().cyan());
         let deps = if installed.dependencies.is_empty() {
@@ -209,7 +210,8 @@ fn handle_info(package: &str, db: &PackageDatabase, index: &PackageIndex, logger
             installed.dependencies.join(", ").yellow().to_string()
         };
         println!("  {} {}", "Dependencies:".dimmed(), deps);
-        println!("  {} {}", "Checksum:".dimmed(), &installed.checksum[..16.min(installed.checksum.len())].dimmed());
+        let checksum = installed.checksum.get(..16).unwrap_or("?");
+        println!("  {} {}", "Checksum:".dimmed(), checksum.dimmed());
     } else if let Some(idx_pkg) = index.find_package(package) {
         println!("{}", format!("\n{} v{}", idx_pkg.name, idx_pkg.version).bright_cyan().bold());
         println!("{}", "─".repeat(50).dimmed());
@@ -226,6 +228,154 @@ fn handle_info(package: &str, db: &PackageDatabase, index: &PackageIndex, logger
         println!("  {} {}", "Status:".dimmed(), "not installed".yellow());
     } else {
         logger.error(&format!("Package '{}' not found", package));
+    }
+}
+
+fn handle_verify(package: &str, db: &PackageDatabase, logger: &Logger) {
+    logger.header(&format!("Verify: {}", package));
+    let installed = match db.get_package(package) {
+        Some(p) => p,
+        None => {
+            logger.error(&format!("Package '{}' is not installed", package));
+            return;
+        }
+    };
+
+    if installed.checksum.is_empty() {
+        logger.warning("No checksum recorded for this package");
+        return;
+    }
+
+    let path = &installed.install_path;
+    let db_path = db.db_path.parent().unwrap_or(path);
+    let source_path = db_path.join(format!("{}-{}.tgz", package, installed.version));
+
+    if source_path.exists() {
+        match verify::sha256_file(&source_path) {
+            Ok(actual) if actual == installed.checksum => {
+                logger.success("Checksum matches — package integrity verified");
+            }
+            Ok(actual) => {
+                logger.error(&format!(
+                    "Checksum MISMATCH!\n  Expected: {}\n  Actual:   {}",
+                    installed.checksum, actual
+                ));
+            }
+            Err(e) => {
+                logger.error(&format!("Could not compute checksum: {e}"));
+            }
+        }
+    } else {
+        logger.info("Cached source not found. Use 'upm update' to re-download and verify.");
+    }
+}
+
+fn handle_outdated(db: &PackageDatabase, index: &PackageIndex, logger: &Logger) {
+    logger.header("Checking for outdated packages");
+
+    let installed = db.list_packages();
+    if installed.is_empty() {
+        logger.info("No packages installed.");
+        return;
+    }
+
+    let mut outdated = Vec::new();
+    for pkg in &installed {
+        if let Some(idx_pkg) = index.find_package(&pkg.name) {
+            let installed_ver = pkg.version.trim_start_matches('v');
+            let index_ver = idx_pkg.version.trim_start_matches('v');
+            if installed_ver != index_ver {
+                outdated.push((pkg.name.clone(), pkg.version.clone(), idx_pkg.version.clone()));
+            }
+        }
+    }
+
+    if outdated.is_empty() {
+        logger.success("All packages are up to date");
+        return;
+    }
+
+    println!(
+        "{}",
+        format!("{:<25} {:<20} {:<20}", "Package", "Installed", "Available")
+            .bright_cyan().bold()
+    );
+    println!("{}", "─".repeat(65).dimmed());
+
+    for (name, installed_ver, available_ver) in &outdated {
+        println!(
+            "  {:<23} {:<20} {:<20}",
+            name.bright_white(),
+            installed_ver.yellow(),
+            available_ver.green()
+        );
+    }
+
+    println!();
+    logger.info(&format!("{} packages can be updated", outdated.len()));
+}
+
+fn handle_show(package: &str, db: &PackageDatabase, index: &PackageIndex, logger: &Logger) {
+    logger.header(&format!("Show: {}", package));
+    handle_info(package, db, index, logger);
+}
+
+fn handle_rollback(action: &RollbackAction, rollback: &RollbackManager, logger: &Logger) {
+    match action {
+        RollbackAction::List => {
+            logger.header("Rollback Points");
+            let points = rollback.list();
+            if points.is_empty() {
+                logger.info("No rollback points available.");
+                return;
+            }
+
+            println!(
+                "{}",
+                format!("{:<25} {:<20} {:<15} {:<15} {}", "ID", "Timestamp", "Before", "After", "Description")
+                    .bright_cyan().bold()
+            );
+            println!("{}", "─".repeat(100).dimmed());
+
+            for point in points {
+                let id_short = point.id.get(..20).unwrap_or(&point.id);
+                let ts = point.timestamp.get(..19).unwrap_or(&point.timestamp);
+                let before_count = point.packages_before.len();
+                let after_count = point.packages_after.len();
+                println!(
+                    "  {:<23} {:<20} {:<15} {:<15} {}",
+                    id_short.bright_white(),
+                    ts.yellow(),
+                    before_count.to_string().cyan(),
+                    after_count.to_string().cyan(),
+                    point.description.dimmed()
+                );
+            }
+            println!();
+            logger.info(&format!("{} rollback points", points.len()));
+        }
+        RollbackAction::Show { id } => {
+            let point = match rollback.rollbacks.iter().find(|p| p.id == *id) {
+                Some(p) => p,
+                None => {
+                    logger.error(&format!("Rollback point '{}' not found", id));
+                    return;
+                }
+            };
+
+            println!("{}", format!("\nRollback Point: {}", point.id).bright_cyan().bold());
+            println!("{}", "─".repeat(50).dimmed());
+            println!("  {} {}", "Timestamp:".dimmed(), point.timestamp.yellow());
+            println!("  {} {}", "Description:".dimmed(), point.description);
+            println!("  {} {} packages", "Before:".dimmed(), point.packages_before.len().to_string().cyan());
+            for (name, ver) in &point.packages_before {
+                println!("    {} {}", name.green(), ver.dimmed());
+            }
+            println!("  {} {} packages", "After:".dimmed(), point.packages_after.len().to_string().cyan());
+            for (name, ver) in &point.packages_after {
+                println!("    {} {}", name.green(), ver.dimmed());
+            }
+        }
     }
 }
 
@@ -319,7 +469,7 @@ async fn main() {
                         logger.error(&format!("Package '{}' is not installed", name));
                         return;
                     }
-                    match Installer::install_package(
+                    match Installer::reinstall_package(
                         name,
                         &config,
                         &logger,
@@ -344,7 +494,7 @@ async fn main() {
                         return;
                     }
                     for name in packages {
-                        match Installer::install_package(
+                        match Installer::reinstall_package(
                             &name,
                             &config,
                             &logger,
@@ -391,6 +541,18 @@ async fn main() {
         }
         Some(Commands::Info { package }) => {
             handle_info(package, &db, &index, &logger);
+        }
+        Some(Commands::Verify { package }) => {
+            handle_verify(package, &db, &logger);
+        }
+        Some(Commands::Outdated) => {
+            handle_outdated(&db, &index, &logger);
+        }
+        Some(Commands::Show { package }) => {
+            handle_show(package, &db, &index, &logger);
+        }
+        Some(Commands::Rollback { action }) => {
+            handle_rollback(action, &rollback, &logger);
         }
         None => {}
     }

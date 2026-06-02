@@ -34,7 +34,34 @@ impl Installer {
             return Err(UpmError::PackageAlreadyInstalled(name.to_string()));
         }
 
-        let rp = rollback.create_point(db, &format!("Install {}", name))?;
+        Self::reinstall_package(name, config, logger, db, github, index, rollback, use_ai).await
+    }
+
+    pub async fn reinstall_package(
+        name: &str,
+        config: &Config,
+        logger: &Logger,
+        db: &mut PackageDatabase,
+        github: &GithubApi,
+        index: &PackageIndex,
+        rollback: &mut RollbackManager,
+        use_ai: bool,
+    ) -> Result<()> {
+        let label = if db.is_installed(name) { "Updating" } else { "Installing" };
+        logger.header(&format!("{} {}", label, name));
+
+        let rp = rollback.create_point(db, &format!("{} {}", label, name))?;
+
+        // Check for circular dependencies before resolving
+        match DependencyResolver::check_circular_dependencies(index, name) {
+            Ok(cycles) if !cycles.is_empty() => {
+                logger.warning(&format!("Circular dependencies detected for '{}':", name));
+                for cycle in &cycles {
+                    logger.warning(&format!("  {} -> {}", cycle.join(" -> "), cycle[0]));
+                }
+            }
+            _ => {}
+        }
 
         let deps = DependencyResolver::resolve(name, index, db)?;
 
@@ -51,7 +78,7 @@ impl Installer {
         Self::install_single_package(name, config, logger, db, github, index, use_ai).await?;
 
         rollback.finalize_point(&rp.id, db)?;
-        logger.success(&format!("Successfully installed {}", name));
+        logger.success(&format!("Successfully {} {}", label.to_lowercase(), name));
 
         Ok(())
     }
@@ -77,6 +104,28 @@ impl Installer {
         }
         std::fs::create_dir_all(&work_dir)?;
 
+        let result = Self::install_core(name, config, logger, db, github, index, use_ai, index_pkg, &install_dir, &work_dir).await;
+
+        if result.is_err() && work_dir.exists() {
+            std::fs::remove_dir_all(&work_dir).ok();
+        }
+
+        result
+    }
+
+    async fn install_core(
+        name: &str,
+        config: &Config,
+        logger: &Logger,
+        db: &mut PackageDatabase,
+        github: &GithubApi,
+        _index: &PackageIndex,
+        use_ai: bool,
+        index_pkg: &crate::package::index::IndexPackage,
+        install_dir: &Path,
+        work_dir: &Path,
+    ) -> Result<()> {
+
         let manifest = Self::fetch_manifest(name, github, index_pkg).await?;
 
         logger.step("Downloading package source...");
@@ -90,9 +139,9 @@ impl Installer {
 
         let groq = Groq::from_env();
         let has_manifest_commands = manifest.build.is_some() || manifest.install.is_some();
-        let use_ai = use_ai || (groq.is_some() && !has_manifest_commands);
+        let should_use_ai = use_ai || (groq.is_some() && !has_manifest_commands);
 
-        if use_ai {
+        if should_use_ai {
             if let Some(ref groq_client) = groq {
                 logger.step("AI: Analyzing repository structure...");
                 let file_list = Groq::list_directory_tree(&work_dir, 3)?;
@@ -140,7 +189,7 @@ impl Installer {
             }
         }
 
-        if !use_ai || groq.is_none() {
+        if !should_use_ai || groq.is_none() {
             if let Some(ref build_cmds) = manifest.build {
                 logger.step("Running build commands...");
                 Self::run_commands(build_cmds, &work_dir, config, logger)?;
@@ -158,7 +207,7 @@ impl Installer {
             }
         }
 
-        if !use_ai || groq.is_none() {
+        if !should_use_ai || groq.is_none() {
             if manifest.install.is_none() {
                 logger.step("Installing package files...");
                 Self::copy_to_install_dir(&work_dir, &install_dir, logger)?;
@@ -173,7 +222,7 @@ impl Installer {
             name: name.to_string(),
             version: manifest.version.clone(),
             source: index_pkg.repository.clone(),
-            install_path: install_dir,
+            install_path: install_dir.to_path_buf(),
             installed_at: Local::now().to_rfc3339(),
             files: files_list,
             checksum,
@@ -181,6 +230,9 @@ impl Installer {
             dependencies: index_pkg.dependencies.clone(),
         };
 
+        if db.is_installed(name) {
+            db.remove_package(name)?;
+        }
         db.add_package(installed_pkg)?;
 
         let cache_file = config.cache_dir.join(format!("{}-{}.tgz", name, manifest.version));
@@ -377,7 +429,33 @@ impl Installer {
                 })
             }
             SourceType::Git => {
-                Err(UpmError::General("Git source type not yet implemented".into()))
+                let url = &manifest.source.url;
+                let branch = manifest.source.branch.as_deref().unwrap_or("master");
+
+                // Remove work_dir since git clone needs target not to exist
+                if work_dir.exists() {
+                    std::fs::remove_dir_all(work_dir)?;
+                }
+
+                let status = Command::new("git")
+                    .args(["clone", "--depth", "1", "--branch", branch, url, work_dir.to_str().unwrap_or("")])
+                    .status()
+                    .map_err(|e| UpmError::General(format!("git clone failed: {e}")))?;
+
+                if !status.success() {
+                    return Err(UpmError::General(format!("git clone failed for {}", url)));
+                }
+
+                // Remove .git to save space
+                let git_dir = work_dir.join(".git");
+                if git_dir.exists() {
+                    std::fs::remove_dir_all(git_dir).ok();
+                }
+
+                Ok(SourceInfo {
+                    path: work_dir.to_path_buf(),
+                    extracted_to: work_dir.to_path_buf(),
+                })
             }
             SourceType::Direct => {
                 let downloader = Downloader::new(4);

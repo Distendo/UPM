@@ -43,13 +43,20 @@ impl DependencyResolver {
                 continue;
             }
 
-            if db.is_installed(&name) {
-                continue;
-            }
-
             let pkg = index
                 .find_package(&name)
                 .ok_or_else(|| UpmError::DependencyError(format!("Package '{}' not found in index", name)))?;
+
+            // Still queue transitive deps even if installed, so children get installed
+            for dep in &pkg.dependencies {
+                if !visited.contains(dep) {
+                    queue.push_back((dep.clone(), depth + 1));
+                }
+            }
+
+            if db.is_installed(&name) {
+                continue;
+            }
 
             let manifest = Manifest {
                 package: pkg.name.clone(),

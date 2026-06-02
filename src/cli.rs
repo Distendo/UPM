@@ -77,4 +77,37 @@ pub enum Commands {
         #[arg(help = "Package name")]
         package: String,
     },
+
+    #[command(about = "Verify installed package integrity")]
+    Verify {
+        #[arg(help = "Package name to verify")]
+        package: String,
+    },
+
+    #[command(about = "List packages with available updates")]
+    Outdated,
+
+    #[command(about = "Show detailed package info")]
+    Show {
+        #[arg(help = "Package name")]
+        package: String,
+    },
+
+    #[command(about = "Manage rollback points")]
+    Rollback {
+        #[command(subcommand)]
+        action: RollbackAction,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RollbackAction {
+    #[command(about = "List all rollback points")]
+    List,
+
+    #[command(about = "Show details of a rollback point")]
+    Show {
+        #[arg(help = "Rollback point ID")]
+        id: String,
+    },
 }

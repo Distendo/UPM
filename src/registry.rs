@@ -51,7 +51,10 @@ impl Registry {
         let repo_index = repo_root.join("index").join("official.json");
         if repo_index.exists() {
             let mut repo_idx = PackageIndex::load(&repo_index)?;
-            repo_idx.add_package(index.find_package(name).unwrap().clone());
+            let pkg = index.find_package(name)
+                .ok_or_else(|| UpmError::General(format!("Package '{}' not found after adding", name)))?
+                .clone();
+            repo_idx.add_package(pkg);
             repo_idx.save(&repo_index)?;
             logger.success(&format!("{} v{} added to repo index", name, version));
 
@@ -100,7 +103,7 @@ impl Registry {
         logger.step("Committing and pushing to GitHub...");
 
         let status = std::process::Command::new("git")
-            .args(["add", "."])
+            .args(["add", "index/official.json"])
             .current_dir(repo_root)
             .status()
             .map_err(|e| UpmError::General(format!("git add failed: {e}")))?;
@@ -109,14 +112,19 @@ impl Registry {
             return Err(UpmError::General("git add failed".into()));
         }
 
-        let status = std::process::Command::new("git")
+        let output = std::process::Command::new("git")
             .args(["commit", "-m", &format!("Add package {}", name)])
             .current_dir(repo_root)
-            .status()
+            .output()
             .map_err(|e| UpmError::General(format!("git commit failed: {e}")))?;
 
-        if !status.success() {
-            logger.warning("Nothing to commit (already up to date)");
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if stderr.contains("nothing to commit") || stderr.contains("nothing added") {
+                logger.warning("Nothing to commit (already up to date)");
+            } else {
+                logger.warning(&format!("git commit warning: {}", stderr.trim()));
+            }
             return Ok(());
         }
 
