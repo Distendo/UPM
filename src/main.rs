@@ -379,6 +379,107 @@ fn handle_rollback(action: &RollbackAction, rollback: &RollbackManager, logger: 
     }
 }
 
+fn platform_binary_name() -> String {
+    let os = std::env::consts::OS;
+    let arch = std::env::consts::ARCH;
+    match (os, arch) {
+        ("macos", "aarch64") => "upm-aarch64-apple-darwin".into(),
+        ("macos", "x86_64") => "upm-x86_64-apple-darwin".into(),
+        ("linux", "x86_64") => "upm-x86_64-unknown-linux-gnu".into(),
+        ("linux", "aarch64") => "upm-aarch64-unknown-linux-gnu".into(),
+        ("windows", "x86_64") => "upm-x86_64-pc-windows-msvc.exe".into(),
+        _ => format!("upm-{}-{}", arch, os),
+    }
+}
+
+async fn handle_update_upm(config: &Config, logger: &Logger, github: &api::github::GithubApi) {
+    logger.header("UPM Self-Update");
+
+    let current_exe = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(e) => {
+            logger.error(&format!("Cannot determine current executable path: {e}"));
+            return;
+        }
+    };
+
+    logger.step("Checking for latest version...");
+    let releases_url = "https://api.github.com/repos/Distendo/UPM/releases/latest";
+    let release_data = match github.client().download_bytes(releases_url).await {
+        Ok(data) => data,
+        Err(e) => {
+            logger.error(&format!("Failed to fetch latest release: {e}"));
+            return;
+        }
+    };
+
+    let release: serde_json::Value = match serde_json::from_slice(&release_data) {
+        Ok(v) => v,
+        Err(e) => {
+            logger.error(&format!("Failed to parse release data: {e}"));
+            return;
+        }
+    };
+
+    let latest_version = release["tag_name"]
+        .as_str()
+        .unwrap_or("unknown")
+        .trim_start_matches('v');
+
+    let current_version = env!("CARGO_PKG_VERSION");
+    if latest_version <= current_version {
+        logger.success(&format!("Already up to date (v{})", current_version));
+        return;
+    }
+
+    logger.info(&format!("Found new version: v{} (current: v{})", latest_version, current_version));
+
+    let binary_name = platform_binary_name();
+    let download_url = format!(
+        "https://github.com/Distendo/UPM/releases/download/v{}/{}",
+        latest_version, binary_name
+    );
+
+    logger.step(&format!("Downloading {}...", binary_name));
+    let tmp_dir = config.cache_dir.join(".upm_update_tmp");
+    std::fs::create_dir_all(&tmp_dir).ok();
+    let tmp_path = tmp_dir.join(&binary_name);
+
+    if let Err(e) = github.client().download_file(&download_url, &tmp_path).await {
+        logger.error(&format!("Download failed: {e}"));
+        logger.info(&format!("Download URL was: {}", download_url));
+        std::fs::remove_dir_all(&tmp_dir).ok();
+        return;
+    }
+
+    logger.step("Installing update...");
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(e) = std::fs::set_permissions(&tmp_path, std::fs::Permissions::from_mode(0o755)) {
+            logger.warning(&format!("Could not set executable permission: {e}"));
+        }
+    }
+
+    let backup_path = current_exe.with_extension("upm.bak");
+    std::fs::rename(&current_exe, &backup_path).ok();
+
+    match std::fs::rename(&tmp_path, &current_exe) {
+        Ok(()) => {
+            std::fs::remove_file(&backup_path).ok();
+            std::fs::remove_dir_all(&tmp_dir).ok();
+            logger.success(&format!("Updated to v{}!", latest_version));
+            logger.info("Please restart any running UPM processes.");
+        }
+        Err(e) => {
+            logger.error(&format!("Failed to replace binary: {e}"));
+            logger.info("Restoring backup...");
+            std::fs::rename(&backup_path, &current_exe).ok();
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -553,6 +654,9 @@ async fn main() {
         }
         Some(Commands::Rollback { action }) => {
             handle_rollback(action, &rollback, &logger);
+        }
+        Some(Commands::UpdateUpm) => {
+            handle_update_upm(&config, &logger, &github).await;
         }
         None => {}
     }

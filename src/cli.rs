@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser, Debug)]
 #[command(name = "upm")]
 #[command(about = "Universal Package Manager", long_about = None)]
-#[command(version = "0.1.0")]
+#[command(version = "0.2.0")]
 #[command(arg_required_else_help = true)]
 #[command(after_help = "Made by Distendo (discord: esedik11)")]
 pub struct Cli {
@@ -98,6 +98,9 @@ pub enum Commands {
         #[command(subcommand)]
         action: RollbackAction,
     },
+
+    #[command(about = "Update UPM itself to the latest version")]
+    UpdateUpm,
 }
 
 #[derive(Subcommand, Debug)]
