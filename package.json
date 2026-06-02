@@ -1,6 +1,6 @@
 {
   "name": "@distendo/upm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Universal Package Manager - Cross-platform package manager written in Rust",
   "author": "Distendo",
   "license": "MIT",
